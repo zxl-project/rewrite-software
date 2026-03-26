@@ -1,0 +1,34 @@
+# -------------------------------------------------------------------
+# Memory Debugging Suppression Profile for JsonEngine
+# -------------------------------------------------------------------
+# This file filters out known false positives or third-party noise 
+# from system loaders and standard libraries during Valgrind analysis.
+
+{
+    # 屏蔽 ARMv7 架构下动态链接器的条件跳转警告
+    # 这种现象通常源于系统级的 ld-linux 优化，而非应用层逻辑错误。
+    Filter_ARMv7_Loader_Jump
+    Memcheck:Cond
+    ...
+    obj:*/ld-*.so
+}
+
+{
+    # 屏蔽标准库中的初始化内存干扰
+    # 某些版本的 libc 在进行字符串处理或 IO 初始化时会触发虚假的不可达警告。
+    Internal_LibC_Baseline_Noise
+    Memcheck:Leak
+    match-leak-kinds: reachable
+    ...
+    obj:*/libc-*.so
+}
+
+{
+    # 针对特定的线程安全或系统调用封装的抑制
+    # 过滤由操作系统底层分配且在进程结束前不主动释放的静态资源。
+    OS_Static_Runtime_Resources
+    Memcheck:Leak
+    match-leak-kinds: possible
+    obj:*/libpthread-*.so
+    ...
+}
